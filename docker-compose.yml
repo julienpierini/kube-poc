@@ -1,0 +1,402 @@
+version: '3'
+services:
+
+###################################
+######       ORGANIZR       #######
+###################################
+
+  organizr:
+    container_name: organizr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    network_mode: host
+    image: organizrtools/organizr-v2
+    restart: unless-stopped
+    volumes:
+      - ${ROOT}/config/organizr:/config
+
+###################################
+######         PLEX         #######
+###################################
+
+  plex-server:
+    container_name: plex-server
+    image: plexinc/pms-docker:latest
+    restart: unless-stopped
+    environment:
+      - PLEX_UID=${PUID}
+      - PLEX_GID=${PGID}
+      - TZ=${TZ} # timezone, defined in .env
+    network_mode: host
+    volumes:
+      - ${ROOT}/config/plex/db:/config # plex database
+      - ${ROOT}/config/plex/transcode:/transcode # temp transcoded files
+      - ${ROOT}/complete:/data # media library
+
+###################################
+######         OMBI         #######
+###################################
+
+  ombi:
+    container_name: ombi
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - BASE_URL=/ombi
+    network_mode: host
+    image: linuxserver/ombi
+    restart: unless-stopped
+    volumes:
+      - ${ROOT}/config/ombi:/config
+
+###################################
+######       TAUTULLI       #######
+###################################
+
+  tautulli:
+    container_name: tautulli
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    network_mode: host
+    image: linuxserver/tautulli
+    restart: unless-stopped
+    volumes:
+      - ${ROOT}/config/tautulli:/config
+      - ${ROOT}/config/tautulli:/logs
+
+###################################
+######       JACKETT        #######
+###################################
+
+  jackett:
+    container_name: jackett
+    image: linuxserver/jackett:latest
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - PUID=${PUID} # default user id, defined in .env
+      - PGID=${PGID} # default group id, defined in .env
+      - TZ=${TZ} # timezone, defined in .env
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${ROOT}/downloads/torrent-blackhole:/downloads # place where to put .torrent files for manual download
+      - ${ROOT}/config/jackett:/config # config files
+
+###################################
+######        SONARR        #######
+###################################
+
+  sonarr:
+    container_name: sonarr
+    image: linuxserver/sonarr:latest
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - PUID=${PUID} # default user id, defined in .env
+      - PGID=${PGID} # default group id, defined in .env
+      - TZ=${TZ} # timezone, defined in .env
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${ROOT}/config/sonarr:/config # config files
+      - '${ROOT}/complete/TV Shows:/TV Shows' # tv shows folder
+      - ${ROOT}/complete/Anime:/Anime # animes folder
+      - ${ROOT}/complete/Docus:/Docus # documentaries folder
+      - ${ROOT}/downloads:/downloads # download folder
+
+###################################
+######        RADARR        #######
+###################################
+
+  radarr:
+    container_name: radarr
+    image: linuxserver/radarr:latest
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - PUID=${PUID} # default user id, defined in .env
+      - PGID=${PGID} # default group id, defined in .env
+      - TZ=${TZ} # timezone, defined in .env
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${ROOT}/config/radarr:/config # config files
+      - ${ROOT}/complete/Movies:/Movies # movies folder
+      - ${ROOT}/complete/Docus:/Docus # documentaries folder
+      - ${ROOT}/downloads:/downloads # download folder
+
+###################################
+######        BAZARR        #######
+###################################
+
+  bazarr:
+    image: linuxserver/bazarr
+    container_name: bazarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - UMASK_SET=022 #optional
+    volumes:
+      - ${ROOT}/config/bazarr:/config
+      - ${ROOT}/complete/Movies:/Movies
+      - '${ROOT}/complete/TV Shows:/TV Shows'
+#      - ${ROOT}/complete/Anime:/Anime
+#      - ${ROOT}/complete/Docus:/Docus
+    network_mode: host
+    restart: unless-stopped
+
+###################################
+######        DELUGE        #######
+###################################
+
+  deluge:
+    container_name: deluge
+    image: linuxserver/deluge:latest
+    restart: always
+    network_mode: host
+    environment:
+      - PUID=${PUID} # default user id, defined in .env
+      - PGID=${PGID} # default group id, defined in .env
+      - TZ=${TZ} # timezone, defined in .env
+    volumes:
+      - ${ROOT}/downloads:/downloads # downloads folder
+      - ${ROOT}/config/deluge:/config # config files
+
+##################################
+######     FILEBROWSER     #######
+##################################
+
+#  filebrowser:
+#    container_name: filebrowser
+#    environment:
+#      - PUID=${PUID}
+#      - PGID=${PGID}
+#      - TZ=${TZ}
+#    image: filebrowser/filebrowser
+#    ports:
+#      - 4001:80/tcp
+#    restart: unless-stopped
+#    volumes:
+#      - ${ROOT}/config/filebrowser/database.db:/database.db
+#      - ${ROOT}/config/filebrowser/filebrowser.json:/.filebrowser.json
+#      - ${ROOT}:/svr
+
+##################################
+######      BOOKSTACK      #######
+##################################
+
+  bookstack:
+    container_name: bookstack
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - DB_HOST=bookstack_db
+      - DB_USER=bookstack
+      - DB_PASS=Plex09876!
+      - DB_DATABASE=bookstackapp
+    image: linuxserver/bookstack
+    ports:
+      - 6875:80/tcp
+    restart: unless-stopped
+    volumes:
+      - ${ROOT}/config/bookstack:/config
+    depends_on:
+      - bookstack_db
+ 
+  bookstack_db:
+    container_name: bookstack_db
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - MYSQL_ROOT_PASSWORD=Plex09876!
+      - TZ=${TZ}
+      - MYSQL_DATABASE=bookstackapp
+      - MYSQL_USER=bookstack
+      - MYSQL_PASSWORD=Plex09876!
+    image: linuxserver/mariadb
+    restart: unless-stopped
+    volumes:
+      - ${ROOT}/config/bookstack:/config
+
+##################################
+######       NETDATA       #######
+##################################
+
+  netdata:
+    restart: always
+    container_name: netstat
+    hostname: weylandmedia.mooo.com
+    image: netdata/netdata
+    ports:
+      - 19999:19999
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+##################################
+######       VARKEN        #######
+##################################
+
+#  influxdb:
+#    hostname: influxdb
+#    container_name: influxdb
+#    image: influxdb
+#    network_mode: host
+#    volumes:
+#      - ${ROOT}/config/influxdb:/var/lib/influxdb
+#    restart: unless-stopped
+  
+#  varken:
+#    hostname: varken
+#    container_name: varken
+#    image: boerderij/varken
+#    network_mode: host
+#    volumes:
+#      - ${ROOT}/config/varken:/config
+#    environment:
+#      - TZ=${TZ}
+#      - VRKN_GLOBAL_SONARR_SERVER_IDS=1
+#      - VRKN_GLOBAL_RADARR_SERVER_IDS=1
+#      - VRKN_GLOBAL_TAUTULLI_SERVER_IDS=1
+#      - VRKN_GLOBAL_OMBI_SERVER_IDS=1
+#      - VRKN_INFLUXDB_URL=localhost
+#      - VRKN_INFLUXDB_PORT=8086
+#      - VRKN_INFLUXDB_SSL=false
+#      - VRKN_INFLUXDB_VERIFY_SSL=false
+#      - VRKN_INFLUXDB_USERNAME=root
+#      - VRKN_INFLUXDB_PASSWORD=root
+#      - VRKN_TAUTULLI_1_URL=localhost:8181/tautulli
+#      - VRKN_TAUTULLI_1_APIKEY=96f67ce7ad3147df8a07ca69403b2166
+#      - VRKN_TAUTULLI_1_SSL=false
+#      - VRKN_TAUTULLI_1_VERIFY_SSL=false
+#      - VRKN_TAUTULLI_1_GET_ACTIVITY=true
+#      - VRKN_TAUTULLI_1_GET_ACTIVITY_RUN_SECONDS=30
+#      - VRKN_TAUTULLI_1_GET_STATS=true
+#      - VRKN_TAUTULLI_1_GET_STATS_RUN_SECONDS=3600
+#      - VRKN_SONARR_1_URL=localhost:8989/sonarr
+#      - VRKN_SONARR_1_APIKEY=64025a8bfe7240e0a5945d75f5ac2dc9
+#      - VRKN_SONARR_1_SSL=false
+#      - VRKN_SONARR_1_VERIFY_SSL=false
+#      - VRKN_SONARR_1_MISSING_DAYS=7
+#      - VRKN_SONARR_1_MISSING_DAYS_RUN_SECONDS=300
+#      - VRKN_SONARR_1_FUTURE_DAYS=1
+#      - VRKN_SONARR_1_FUTURE_DAYS_RUN_SECONDS=300
+#      - VRKN_SONARR_1_QUEUE=true
+#      - VRKN_SONARR_1_QUEUE_RUN_SECONDS=300
+#      - VRKN_RADARR_1_URL=localhost:7878/radarr
+#      - VRKN_RADARR_1_APIKEY=517d158e2c544011b30fed73255e48e6
+#      - VRKN_RADARR_1_SSL=false
+#      - VRKN_RADARR_1_VERIFY_SSL=false
+#      - VRKN_RADARR_1_QUEUE=true
+#      - VRKN_RADARR_1_QUEUE_RUN_SECONDS=300
+#      - VRKN_RADARR_1_GET_MISSING=true
+#      - VRKN_RADARR_1_GET_MISSING_RUN_SECONDS=300
+#      - VRKN_OMBI_1_URL=localhost:3579/ombi
+#      - VRKN_OMBI_1_APIKEY=b8456aa73a104ddb8a85d5e1ebb53081
+#      - VRKN_OMBI_1_SSL=false
+#      - VRKN_OMBI_1_VERIFY_SSL=false
+#      - VRKN_OMBI_1_GET_REQUEST_TYPE_COUNTS=true
+#      - VRKN_OMBI_1_REQUEST_TYPE_RUN_SECONDS=300
+#      - VRKN_OMBI_1_GET_REQUEST_TOTAL_COUNTS=true
+#      - VRKN_OMBI_1_REQUEST_TOTAL_RUN_SECONDS=300
+#      - VRKN_OMBI_1_GET_ISSUE_STATUS_COUNTS=true
+#      - VRKN_OMBI_1_ISSUE_STATUS_RUN_SECONDS=300
+#    depends_on:
+#      - influxdb
+#    restart: unless-stopped
+  
+#  grafana:
+#    hostname: grafana
+#    container_name: grafana
+#    image: grafana/grafana
+#    network_mode: host
+#    ports:
+#      - 3000:3000
+#    volumes: 
+#      - ${ROOT}/config/grafana:/config
+#    environment:
+#      - GF_PATHS_DATA=/config/data
+#      - GF_PATHS_LOGS=/config/logs
+#      - GF_PATHS_PLUGINS=/config/plugins
+#      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel
+#      - GF_AUTH_ANONYMOUS_ENABLED=true
+#      - GF_AUTH_ANONYMOUS_ORG_NAME=Weylandmedia
+#      - GF_SECURITY_ALLOW_EMBEDDING=true
+#      - GF_SERVER_DOMAIN=weylandmedia.mooo.com
+#      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/varken/
+#    depends_on:
+#      - influxdb
+#      - varken
+#    restart: unless-stopped
+
+##################################
+######     SYNCLOUNGE      #######
+##################################
+
+# This is commented due to the lack of documentation
+# This part is working but not as expected. The local server and the web client are working
+# but the configuration is not applying
+
+#  synclounge:
+#    container_name: synclounge
+#    image: starbix/synclounge
+#    ports:
+#      - 9288:8088
+#      - 9289:8089
+#    volumes:
+#      - ${ROOT}/config/synclounge:/config
+#    environment:
+#      - PUID=${PUID}
+#      - PGID=${PGID}
+#      - TZ=${TZ}
+#      - DOMAIN=weylandmedia.mooo.com
+#      - autoJoin=true
+#      - webroot=/slweb
+#      - serverroot=/slserver
+#      - autoJoinServer=https://weylandmedia.mooo.com/slserver
+#    restart: unless-stopped
+
+##################################
+######     PORTAINER       #######
+##################################
+
+#  portainer:
+#    image: portainer/portainer
+#    hostname: portainer
+#    container_name: portainer
+#    restart: always
+#    command: -H unix:///var/run/docker.sock
+#    ports:
+#      - "9001:9000"
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
+#      - ${ROOT}/config/portainer/data:/data
+#      - ${ROOT}/config/portainer/shared:/shared
+#    environment:
+#      - TZ=${TZ}
+
+##################################
+######     BOT       #######
+##################################
+
+#  mellow:
+#    image: voidp/mellow
+#    hostname: mellow
+#    container_name: mellow
+#    ports:
+#      - "5060:5060"
+#    volumes: 
+#      - /${ROOT}/config/mellow/:/usr/src/app/data/
+#    environment:
+#      - PORT=5060
+#      - JWT_SECRET=plexcestcool
+#    restart: unless-stopped

@@ -1,0 +1,46 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jackett-deployment
+  labels:
+    app: jackett
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jackett
+  template:
+    metadata:
+      labels:
+        app: jackett
+    spec:
+      containers:
+      - name: jackett
+        image: ghcr.io/linuxserver/jackett
+        ports:
+        - containerPort: 9117
+        env:
+        - name: PUID
+          value: '1002'
+        - name: PGID
+          value: '1001'
+        - name: TZ
+          value: Europe/Paris
+        volumeMounts:
+        - name: torrent-blackhole
+          mountPath: /downloads
+        - name: config
+          mountPath: /config
+        - name: localtime
+          mountPath: /etc/localtime
+      volumes:
+      - name: torrent-blackhole
+        persistentVolumeClaim:
+          claimName: pvc-downloads
+      - name: config
+        persistentVolumeClaim:
+          claimName: jackett-pvc-config
+      - name: localtime
+        persistentVolumeClaim:
+          claimName: pvc-localtime

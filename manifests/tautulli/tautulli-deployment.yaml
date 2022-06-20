@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tautulli-deployment
+  labels:
+    app: tautulli
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tautulli
+  template:
+    metadata:
+      labels:
+        app: tautulli
+    spec:
+      containers:
+      - name: tautulli
+        image: ghcr.io/linuxserver/tautulli
+        ports:
+        - containerPort: 8181
+        env:
+        - name: PUID
+          value: '1002'
+        - name: PGID
+          value: '1001'
+        - name: TZ
+          value: Europe/Paris
+        volumeMounts:
+        - name: logs
+          mountPath: /logs
+        - name: config
+          mountPath: /config
+      volumes:
+      - name: logs
+        persistentVolumeClaim:
+          claimName: tautulli-pvc-logs
+      - name: config
+        persistentVolumeClaim:
+          claimName: tautulli-pvc-config

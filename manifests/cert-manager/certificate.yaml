@@ -1,0 +1,37 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: myzone-tls
+  namespace: default
+spec:
+  secretName: myzone-tls
+  duration: 4320h # 6m
+  renewBefore: 360h # 15d
+  commonName: www.myzone.fr
+  issuerRef:
+    kind: ClusterIssuer
+    name: cloudflare
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 4096
+  dnsNames:
+  - myzonz.fr
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: private-tls
+  namespace: default
+spec:
+  isCA: true
+  commonName: private-tls
+  secretName: private-tls
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: selfsigned-cluster-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io

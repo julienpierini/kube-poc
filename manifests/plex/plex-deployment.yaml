@@ -1,0 +1,54 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plex-deployment
+  labels:
+    app: plex
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: plex
+  template:
+    metadata:
+      labels:
+        app: plex
+    spec:
+      containers:
+      - name: plex
+        image: ghcr.io/linuxserver/plex
+        ports:
+          - containerPort: 32400
+        env:
+        - name: PLEX_UID
+          value: '1002'
+        - name: PLEX_GID
+          value: '1001'
+        - name: TZ
+          value: Europe/Paris
+        volumeMounts:
+        - name: downloads
+          mountPath: /downloads
+        - mountPath: "/data"
+          name:  nfs-storage
+        - name: transcode
+          mountPath: /transcode
+        - name: config
+          mountPath: /config
+      volumes:
+      - name: downloads
+        persistentVolumeClaim:
+          claimName: nfs-pvc
+      - name: nfs-storage
+        nfs:
+          server: 192.168.0.39
+          path: /srv
+      - name: config
+        hostPath:
+          path: /media/plex/storage/homemedia/config/plex/db
+          type: DirectoryOrCreate 
+      - name: transcode
+        hostPath:
+          path: /media/plex/storage/homemedia/config/plex/transcode
+          type: DirectoryOrCreate 

@@ -1,0 +1,22 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myzone-ingress
+spec:
+  tls:
+  - hosts:
+      - myzone.fr
+    secretName: myzone-tls
+  rules:
+    - host: myzone.fr
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: overseerr-service
+              port:
+                number: 5055
+  ingressClassName: nginx

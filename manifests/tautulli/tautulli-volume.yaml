@@ -1,0 +1,62 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: tautulli-pv-config
+  labels:
+    type: local
+    storage: tautulli-config
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/media/plex/storage/homemedia/config/tautulli"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: tautulli-pv-logs
+  labels:
+    type: local
+    storage: tautulli-logs
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/media/plex/storage/homemedia/config/tautulli/logs"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tautulli-pvc-config
+spec:
+  storageClassName: manual
+  selector:
+    matchLabels:
+      storage: "tautulli-config"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tautulli-pvc-logs
+spec:
+  storageClassName: manual
+  selector:
+    matchLabels:
+      storage: "tautulli-logs"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

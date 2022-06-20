@@ -1,0 +1,51 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarr-deployment
+  labels:
+    app: sonarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarr
+  template:
+    metadata:
+      labels:
+        app: sonarr
+    spec:
+      containers:
+      - name: sonarr
+        image: ghcr.io/linuxserver/sonarr
+        ports:
+        - containerPort: 8989
+        env:
+        - name: PUID
+          value: '1002'
+        - name: PGID
+          value: '1001'
+        - name: TZ
+          value: Europe/Paris
+        volumeMounts:
+        - name: data
+          mountPath: /complete
+        - name: downloads
+          mountPath: /downloads
+        - name: config
+          mountPath: /config
+        - name: localtime
+          mountPath: /etc/localtime
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: pvc-data
+      - name: downloads
+        persistentVolumeClaim:
+          claimName: pvc-downloads
+      - name: config
+        persistentVolumeClaim:
+          claimName: sonarr-pvc-config
+      - name: localtime
+        persistentVolumeClaim:
+          claimName: pvc-localtime
