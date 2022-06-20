@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minecraft-deployment
+  labels:
+    app: minecraft
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minecraft
+  template:
+    metadata:
+      labels:
+        app: minecraft
+    spec:
+      containers:
+      - name: minecraft
+        image: julienpierini/minecraft:1.16.5
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 25565
+        env:
+        - name: XMX
+          value: '3072'
+        - name: XMS
+          value: '3072'
+        volumeMounts:
+        - name: data
+          mountPath: /usr/src/minecraft/world
+        - name: config
+          mountPath: "/usr/src/minecraft/server.properties"
+          subPath: server.properties
+        - name: config
+          mountPath: "/usr/src/minecraft/whitelist.json"
+          subPath: whitelist.json
+        - name: config
+          mountPath: "/usr/src/minecraft/banned-ips.json"
+          subPath: banned-ips.json
+        - name: config
+          mountPath: "/usr/src/minecraft/banned-players.json"
+          subPath: banned-players.json
+        # - name: config
+        #   mountPath: "/usr/src/minecraft/ops.json"
+        #   subPath: ops.json
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: minecraft-pvc-data
+      - name: config
+        configMap:
+          name: minecraft-server-conf
